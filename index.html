@@ -867,6 +867,7 @@ function renderGrid() {
 function setActiveTeam(id) {
   activeTeamId = id;
   renderScoreboards();
+  saveState();
   showToast(`${teams[id-1].name} 作答中`, 'toast-info');
 }
 
@@ -964,6 +965,7 @@ function judgeAnswer(correct) {
   closeModal();
   renderScoreboards();
   renderGrid();
+  saveState();
 }
 
 function closeModal() {
@@ -1008,12 +1010,34 @@ function rosterBgClick(e) {
   if (e.target === document.getElementById('rosterBg')) closeRoster();
 }
 
+// ── LOCALSTORAGE 自動存檔 ─────────────────────────────────────
+const SAVE_KEY = 'gamaTrip2026';
+
+function saveState() {
+  localStorage.setItem(SAVE_KEY, JSON.stringify({
+    teams, tileState, activeTeamId
+  }));
+}
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const s = JSON.parse(raw);
+    if (s.teams)       teams        = s.teams;
+    if (s.tileState)   tileState    = s.tileState;
+    if (s.activeTeamId) activeTeamId = s.activeTeamId;
+    return true;
+  } catch(e) { return false; }
+}
+
 // ── RESET ─────────────────────────────────────────────────────
 function resetGame() {
-  if (!confirm('確定要重置遊戲嗎？')) return;
+  if (!confirm('確定要重置遊戲嗎？所有分數與進度將清除。')) return;
   teams.forEach(t => { t.score = 0; t.answered = 0; });
   tileState = {};
   activeTeamId = 1;
+  localStorage.removeItem(SAVE_KEY);
   renderScoreboards();
   renderGrid();
   showToast('遊戲已重置', 'toast-info');
@@ -1030,8 +1054,10 @@ function showToast(msg, cls) {
 }
 
 // ── INIT ──────────────────────────────────────────────────────
+const _restored = loadState();
 renderScoreboards();
 renderGrid();
+if (_restored) showToast('已還原上次遊戲進度 ✓', 'toast-info');
 </script>
 </body>
 </html>
