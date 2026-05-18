@@ -433,6 +433,46 @@ body {
 }
 .modal-close:hover { background: var(--blue-lt); border-color: var(--blue-1); color: var(--blue-md); }
 
+/* ── COUNTDOWN RING ── */
+.countdown-wrap {
+  margin-left: auto;
+  margin-right: 36px;
+  display: flex;
+  align-items: center;
+}
+.countdown-ring {
+  position: relative;
+  width: 46px; height: 46px;
+  flex-shrink: 0;
+}
+.countdown-ring svg { transform: rotate(-90deg); display: block; }
+.ring-bg  { fill: none; stroke: var(--border); stroke-width: 3.6; }
+.ring-fg  {
+  fill: none;
+  stroke: var(--blue-1);
+  stroke-width: 3.6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.85s linear, stroke 0.4s;
+}
+.ring-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1em;
+  font-weight: 900;
+  color: var(--blue-md);
+  transition: color 0.4s;
+}
+.countdown-ring.warn  .ring-fg  { stroke: #F59E0B; }
+.countdown-ring.warn  .ring-num { color: #B45309; }
+.countdown-ring.danger .ring-fg  { stroke: var(--wrong); }
+.countdown-ring.danger .ring-num { color: #B91C1C; }
+.countdown-ring.done  .ring-fg  { stroke: var(--wrong); }
+.countdown-ring.done  .ring-num { color: #B91C1C; animation: cntPulse 0.45s ease-in-out infinite alternate; }
+@keyframes cntPulse { from { transform: scale(1); } to { transform: scale(1.25); } }
+
 .modal-body { padding: 22px 24px 24px; }
 
 .q-text {
@@ -654,6 +694,15 @@ body {
     <div class="modal-head">
       <span class="modal-qnum" id="mQnum"></span>
       <span class="modal-cat-badge" id="mCat"></span>
+      <div class="countdown-wrap">
+        <div class="countdown-ring" id="cntRing">
+          <svg width="46" height="46" viewBox="0 0 46 46">
+            <circle class="ring-bg" cx="23" cy="23" r="19"/>
+            <circle class="ring-fg" id="cntArc" cx="23" cy="23" r="19"/>
+          </svg>
+          <div class="ring-num" id="cntNum">15</div>
+        </div>
+      </div>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -781,6 +830,9 @@ let activeTeamId = 1;
 let tileState = {};
 let currentQId = null;
 let selectedAnswerTeam = null;
+let countdownTimer = null;
+const TOTAL_SEC = 15;
+const RING_CIRC = 2 * Math.PI * 19; // r=19 → ≈ 119.4
 
 // ── RENDER ────────────────────────────────────────────────────
 function renderScoreboards() {
@@ -818,6 +870,38 @@ function setActiveTeam(id) {
   showToast(`${teams[id-1].name} 作答中`, 'toast-info');
 }
 
+// ── COUNTDOWN ─────────────────────────────────────────────────
+function startCountdown() {
+  stopCountdown();
+  let sec = TOTAL_SEC;
+  const arc  = document.getElementById('cntArc');
+  const num  = document.getElementById('cntNum');
+  const ring = document.getElementById('cntRing');
+  arc.style.strokeDasharray  = RING_CIRC;
+  arc.style.strokeDashoffset = 0;
+  num.textContent = sec;
+  ring.className = 'countdown-ring';
+
+  countdownTimer = setInterval(() => {
+    sec--;
+    if (sec <= 0) {
+      stopCountdown();
+      arc.style.strokeDashoffset = RING_CIRC;
+      num.textContent = '0';
+      ring.className = 'countdown-ring done';
+      return;
+    }
+    arc.style.strokeDashoffset = RING_CIRC * (1 - sec / TOTAL_SEC);
+    num.textContent = sec;
+    ring.className = 'countdown-ring' +
+      (sec <= 4 ? ' danger' : sec <= 8 ? ' warn' : '');
+  }, 1000);
+}
+
+function stopCountdown() {
+  if (countdownTimer) { clearInterval(countdownTimer); countdownTimer = null; }
+}
+
 // ── MODAL ─────────────────────────────────────────────────────
 function openQuestion(id) {
   if (tileState[id]) return;
@@ -848,6 +932,7 @@ function openQuestion(id) {
   document.getElementById('answerSection').classList.remove('show');
   document.getElementById('revealWrap').style.display = '';
   document.getElementById('modalBg').classList.add('show');
+  startCountdown();
 }
 
 function pickTeam(id) {
@@ -857,6 +942,7 @@ function pickTeam(id) {
 }
 
 function revealAnswer() {
+  stopCountdown();
   document.getElementById('revealWrap').style.display = 'none';
   document.getElementById('answerSection').classList.add('show');
 }
@@ -881,6 +967,7 @@ function judgeAnswer(correct) {
 }
 
 function closeModal() {
+  stopCountdown();
   document.getElementById('modalBg').classList.remove('show');
   currentQId = null;
 }
