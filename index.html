@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GAMA 員旅大挑戰 2025</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #EFF8FF;
+  --surface:  #FFFFFF;
+  --border:   #BFDBFE;
+  --blue-1:   #0EA5E9;
+  --blue-2:   #0891B2;
+  --blue-3:   #2563EB;
+  --blue-4:   #6366F1;
+  --blue-dk:  #0C4A6E;
+  --blue-md:  #0369A1;
+  --blue-lt:  #E0F2FE;
+  --text:     #0C4A6E;
+  --text-sub: #7DB9D5;
+  --correct:  #10B981;
+  --wrong:    #F87171;
+  --radius:   14px;
+  /* team accent colours (pastel) */
+  --t1: #F87171;   /* red   */
+  --t2: #FBBF24;   /* yellow */
+  --t3: #6EE7B7;   /* green */
+  --t4: #93C5FD;   /* blue  */
+  --t1-bg: #FEF2F2;
+  --t2-bg: #FFFBEB;
+  --t3-bg: #F0FDF4;
+  --t4-bg: #EFF6FF;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans TC', 'Microsoft JhengHei', sans-serif;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--surface);
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 64px;
+}
+.header-title {
+  font-size: 1.25em;
+  font-weight: 900;
+  color: var(--blue-md);
+  letter-spacing: 3px;
+}
+.header-right { display: flex; gap: 8px; }
+
+.btn {
+  padding: 7px 16px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  color: var(--blue-md);
+  font-size: 0.82em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: inherit;
+  letter-spacing: 1px;
+}
+.btn:hover { background: var(--blue-lt); border-color: var(--blue-1); }
+.btn.primary {
+  background: var(--blue-md);
+  border-color: var(--blue-md);
+  color: white;
+}
+.btn.primary:hover { background: var(--blue-3); border-color: var(--blue-3); }
+
+/* ── SCORE ROW ── */
+.score-row {
+  display: flex;
+  gap: 12px;
+  padding: 16px 24px 0;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.team-card {
+  flex: 1;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  text-align: center;
+  user-select: none;
+}
+.team-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.team-card[data-tid="1"]::before { background: var(--t1); }
+.team-card[data-tid="2"]::before { background: var(--t2); }
+.team-card[data-tid="3"]::before { background: var(--t3); }
+.team-card[data-tid="4"]::before { background: var(--t4); }
+
+.team-card.active { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+.team-card[data-tid="1"].active { border-color: var(--t1); background: var(--t1-bg); }
+.team-card[data-tid="2"].active { border-color: var(--t2); background: var(--t2-bg); }
+.team-card[data-tid="3"].active { border-color: var(--t3); background: var(--t3-bg); }
+.team-card[data-tid="4"].active { border-color: var(--t4); background: var(--t4-bg); }
+
+.team-card:hover:not(.active) { background: var(--blue-lt); }
+
+.active-tag {
+  display: none;
+  position: absolute;
+  top: -11px; left: 50%;
+  transform: translateX(-50%);
+  background: var(--text);
+  color: white;
+  font-size: 0.65em;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: 1px;
+}
+.team-card.active .active-tag { display: block; }
+
+.team-num {
+  font-size: 0.75em;
+  font-weight: 700;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  margin-bottom: 2px;
+}
+.team-score {
+  font-size: 2.6em;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--text);
+}
+
+.team-meta {
+  font-size: 0.72em;
+  color: var(--text-sub);
+  margin-top: 4px;
+}
+.team-meta b { color: var(--text); }
+.team-maxed {
+  margin-top: 3px;
+  font-size: 0.68em;
+  color: var(--wrong);
+  font-weight: 700;
+}
+.team-roster-btn {
+  margin-top: 6px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: none;
+  color: var(--text-sub);
+  font-size: 0.7em;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.18s;
+  letter-spacing: 0.5px;
+}
+.team-roster-btn:hover { background: var(--blue-lt); border-color: var(--blue-1); color: var(--blue-md); }
+
+/* ── ROSTER MODAL ── */
+.roster-modal-bg {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(12,74,110,0.45);
+  z-index: 600;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.roster-modal-bg.show { display: flex; }
+.roster-box {
+  background: var(--surface);
+  border-radius: 20px;
+  max-width: 360px;
+  width: 90%;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.16);
+  animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  border: 1.5px solid var(--border);
+}
+.roster-head {
+  padding: 16px 22px 14px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+.roster-head::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  border-radius: 20px 20px 0 0;
+}
+.roster-head[data-tid="1"]::before { background: var(--t1); }
+.roster-head[data-tid="2"]::before { background: var(--t2); }
+.roster-head[data-tid="3"]::before { background: var(--t3); }
+.roster-head[data-tid="4"]::before { background: var(--t4); }
+.roster-title {
+  font-size: 1em;
+  font-weight: 900;
+  color: var(--text);
+  letter-spacing: 2px;
+}
+.roster-close {
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-sub);
+  font-size: 0.9em;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+  transition: all 0.18s;
+}
+.roster-close:hover { background: var(--blue-lt); border-color: var(--blue-1); color: var(--blue-md); }
+.roster-body { padding: 16px 22px 20px; }
+.roster-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.roster-member {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.9em;
+  font-weight: 700;
+  color: var(--text);
+  text-align: center;
+}
+
+/* ── LEGEND ── */
+.legend {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  padding: 12px 24px 6px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.73em;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+.leg-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+/* ── GRID ── */
+.grid-outer {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 8px 24px 40px;
+}
+.question-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 9px;
+}
+
+.q-tile {
+  border-radius: 12px;
+  border: 1.5px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 8px 14px;
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  min-height: 90px;
+}
+.q-tile:hover:not(.used) {
+  background: var(--blue-lt);
+  border-color: var(--blue-1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(14,165,233,0.2);
+  z-index: 3;
+}
+.q-num {
+  font-size: 1.55em;
+  font-weight: 900;
+  color: var(--text);
+  line-height: 1;
+}
+.q-cat-lbl {
+  font-size: 0.75em;
+  font-weight: 700;
+  color: var(--text-sub);
+  line-height: 1.4;
+}
+
+/* answered states */
+.q-tile.used { cursor: default; }
+.q-tile.correct {
+  background: #ECFDF5;
+  border-color: #6EE7B7;
+}
+.q-tile.wrong {
+  background: #FFF5F5;
+  border-color: #FCA5A5;
+}
+.q-tile.correct .q-num { color: var(--correct); }
+.q-tile.wrong   .q-num { color: var(--wrong); }
+.q-tile.correct:hover, .q-tile.wrong:hover { transform: none; box-shadow: none; }
+
+.tile-dot {
+  position: absolute;
+  top: 4px; right: 5px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  font-size: 0.5em;
+  color: white;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* ── MODAL ── */
+.modal-bg {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(12,74,110,0.5);
+  z-index: 500;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.modal-bg.show { display: flex; }
+
+.modal-box {
+  background: var(--surface);
+  border-radius: 20px;
+  max-width: 620px;
+  width: 94%;
+  overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0,0,0,0.18);
+  animation: popIn 0.28s cubic-bezier(0.34,1.56,0.64,1);
+  border: 1.5px solid var(--border);
+}
+@keyframes popIn {
+  from { transform: scale(0.88) translateY(16px); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.modal-head {
+  background: var(--blue-lt);
+  border-bottom: 1.5px solid var(--border);
+  padding: 16px 24px 14px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.modal-qnum {
+  font-size: 0.78em;
+  font-weight: 700;
+  color: var(--blue-md);
+  background: white;
+  border: 1.5px solid var(--border);
+  padding: 3px 12px;
+  border-radius: 20px;
+}
+.modal-cat-badge {
+  font-size: 0.78em;
+  font-weight: 700;
+  padding: 3px 12px;
+  border-radius: 20px;
+  color: white;
+}
+.cat-動畫題 { background: #EC4899; }
+.cat-歷史題 { background: #D97706; }
+.cat-地理題 { background: #059669; }
+.cat-公司題 { background: #0284C7; }
+.cat-邏輯題 { background: #7C3AED; }
+.cat-生活題 { background: #EA580C; }
+.cat-自然題 { background: #0D9488; }
+
+.modal-close {
+  position: absolute;
+  top: 12px; right: 14px;
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-sub);
+  font-size: 1em;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex; align-items: center; justify-content: center;
+  font-family: inherit;
+}
+.modal-close:hover { background: var(--blue-lt); border-color: var(--blue-1); color: var(--blue-md); }
+
+.modal-body { padding: 22px 24px 24px; }
+
+.q-text {
+  font-size: 1.2em;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.7;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+}
+
+.section-label {
+  font-size: 0.75em;
+  font-weight: 700;
+  color: var(--text-sub);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.team-pick-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.pick-btn {
+  flex: 1;
+  padding: 9px 6px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border);
+  font-size: 0.85em;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s;
+  background: var(--bg);
+  color: var(--text-sub);
+  font-family: inherit;
+}
+.pick-btn:disabled { opacity: 0.35; cursor: not-allowed; text-decoration: line-through; }
+.pick-btn[data-tid="1"].sel { background: var(--t1-bg); border-color: var(--t1); color: var(--text); }
+.pick-btn[data-tid="2"].sel { background: var(--t2-bg); border-color: var(--t2); color: var(--text); }
+.pick-btn[data-tid="3"].sel { background: var(--t3-bg); border-color: var(--t3); color: var(--text); }
+.pick-btn[data-tid="4"].sel { background: var(--t4-bg); border-color: var(--t4); color: var(--text); }
+.pick-btn:not(:disabled):hover { background: var(--blue-lt); border-color: var(--blue-1); color: var(--blue-md); }
+
+.btn-reveal {
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  background: var(--blue-md);
+  color: white;
+  font-size: 1em;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.18s;
+  font-family: inherit;
+}
+.btn-reveal:hover { background: var(--blue-3); box-shadow: 0 4px 16px rgba(2,99,161,0.28); }
+
+.answer-section { display: none; margin-top: 16px; animation: fadeUp 0.3s ease; }
+.answer-section.show { display: block; }
+@keyframes fadeUp { from { transform: translateY(8px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.ans-card {
+  background: var(--blue-lt);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 10px;
+}
+.ans-lbl { font-size: 0.72em; color: var(--blue-md); font-weight: 700; margin-bottom: 4px; letter-spacing: 1px; }
+.ans-text { font-size: 1.15em; font-weight: 700; color: var(--text); white-space: pre-wrap; line-height: 1.55; }
+
+.pen-card {
+  background: #FFF7F7;
+  border: 1.5px dashed #FCA5A5;
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+}
+.pen-lbl { font-size: 0.72em; color: var(--wrong); font-weight: 700; margin-bottom: 4px; letter-spacing: 1px; }
+.pen-text { font-size: 0.95em; color: #B91C1C; font-weight: 500; line-height: 1.5; }
+
+.judge-row { display: flex; gap: 10px; }
+.btn-correct, .btn-wrong {
+  flex: 1;
+  padding: 13px;
+  border-radius: 10px;
+  font-size: 1em;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.18s;
+  font-family: inherit;
+  letter-spacing: 1px;
+}
+.btn-correct { background: var(--correct); color: white; }
+.btn-wrong   { background: var(--wrong);   color: white; }
+.btn-correct:hover { background: #059669; box-shadow: 0 4px 14px rgba(16,185,129,0.3); }
+.btn-wrong:hover   { background: #EF4444; box-shadow: 0 4px 14px rgba(248,113,113,0.3); }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-80px);
+  padding: 11px 26px;
+  border-radius: 24px;
+  font-size: 0.95em;
+  font-weight: 700;
+  z-index: 999;
+  transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.14);
+  letter-spacing: 1px;
+  border: 1.5px solid transparent;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast-ok   { background: #ECFDF5; color: #065F46; border-color: #6EE7B7; }
+.toast-err  { background: #FFF5F5; color: #991B1B; border-color: #FCA5A5; }
+.toast-info { background: var(--blue-lt); color: var(--blue-md); border-color: var(--border); }
+
+/* ── SCOREBOARD OVERLAY ── */
+.sb-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  z-index: 800;
+  background: var(--bg);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 30px;
+}
+.sb-overlay.show { display: flex; }
+.sb-title {
+  font-size: 1.5em;
+  font-weight: 900;
+  color: var(--blue-md);
+  margin-bottom: 28px;
+  letter-spacing: 4px;
+}
+.sb-cards { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.sb-card {
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 18px;
+  padding: 24px 40px;
+  text-align: center;
+  min-width: 160px;
+  animation: sbPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+.sb-card:nth-child(2) { animation-delay: 0.08s; }
+.sb-card:nth-child(3) { animation-delay: 0.16s; }
+.sb-card:nth-child(4) { animation-delay: 0.24s; }
+@keyframes sbPop { from { transform: scale(0.7) translateY(20px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.sb-rank { font-size: 2.4em; line-height: 1; }
+.sb-name { font-size: 1em; font-weight: 700; color: var(--text-sub); margin: 6px 0; letter-spacing: 1px; }
+.sb-pts  { font-size: 3.2em; font-weight: 900; color: var(--text); line-height: 1; }
+.sb-card[data-rank="1"] { border-color: #FBBF24; }
+.sb-card[data-rank="1"] .sb-pts { color: #D97706; }
+.sb-card[data-rank="2"] .sb-pts { color: var(--blue-md); }
+.sb-card[data-rank="3"] .sb-pts { color: var(--blue-2); }
+.sb-answered { font-size: 0.75em; color: var(--text-sub); margin-top: 5px; }
+
+.sb-back {
+  margin-top: 24px;
+  padding: 10px 32px;
+  border-radius: 8px;
+  background: none;
+  border: 1.5px solid var(--border);
+  color: var(--text-sub);
+  font-size: 0.85em;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 1px;
+  transition: all 0.18s;
+}
+.sb-back:hover { background: var(--blue-lt); border-color: var(--blue-1); color: var(--blue-md); }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--border); max-width: 1100px; margin: 12px auto 0; }
+
+@media (max-width: 700px) {
+  .header-title { font-size: 1em; letter-spacing: 1px; }
+  .score-row { padding: 12px 12px 0; gap: 8px; }
+  .team-score { font-size: 2em; }
+  .grid-outer { padding: 8px 12px 40px; }
+  .q-num { font-size: 1em; }
+  .modal-body { padding: 16px 16px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header class="header">
+  <div class="header-title">GAMA 員旅大挑戰 · 2026</div>
+  <div class="header-right">
+    <button class="btn" onclick="showScoreboard()">排名</button>
+    <button class="btn" onclick="resetGame()">重置</button>
+  </div>
+</header>
+
+<!-- ── SCORE ROW ── -->
+<div class="score-row" id="scoreRow"></div>
+
+<div class="divider"></div>
+
+
+<!-- ── GRID ── -->
+<div class="grid-outer">
+  <div class="question-grid" id="questionGrid"></div>
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-bg" id="modalBg" onclick="bgClick(event)">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span class="modal-qnum" id="mQnum"></span>
+      <span class="modal-cat-badge" id="mCat"></span>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="q-text" id="mQuestion"></div>
+      <div class="section-label">作答隊伍</div>
+      <div class="team-pick-row" id="teamPickRow"></div>
+      <div id="revealWrap">
+        <button class="btn-reveal" onclick="revealAnswer()">揭曉答案</button>
+      </div>
+      <div class="answer-section" id="answerSection">
+        <div class="ans-card">
+          <div class="ans-lbl">正確答案</div>
+          <div class="ans-text" id="mAnswer"></div>
+        </div>
+        <div class="pen-card" id="penaltyCard">
+          <div class="pen-lbl">懲罰任務（答錯才執行）</div>
+          <div class="pen-text" id="mPenalty"></div>
+        </div>
+        <div class="judge-row">
+          <button class="btn-correct" onclick="judgeAnswer(true)">答對　+10 分</button>
+          <button class="btn-wrong"   onclick="judgeAnswer(false)">答錯　執行懲罰</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ROSTER MODAL ── -->
+<div class="roster-modal-bg" id="rosterBg" onclick="rosterBgClick(event)">
+  <div class="roster-box">
+    <div class="roster-head" id="rosterHead">
+      <div class="roster-title" id="rosterTitle"></div>
+      <button class="roster-close" onclick="closeRoster()">✕</button>
+    </div>
+    <div class="roster-body">
+      <div class="roster-grid" id="rosterGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── SCOREBOARD OVERLAY ── -->
+<div class="sb-overlay" id="sbOverlay">
+  <div class="sb-title">隊伍排名</div>
+  <div class="sb-cards" id="sbCards"></div>
+  <button class="sb-back" onclick="hideScoreboard()">返回遊戲</button>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────
+const QUESTIONS = [
+  {id:1,  cat:"動畫題", q:"《哈姆太郎》中，哈姆太郎最喜歡吃什麼？", a:"向日葵種子（葵瓜子）", p:"唱一次這句歌詞：\n最喜歡的東西 是向日葵的種子"},
+  {id:2,  cat:"歷史題", q:"美國歷史上廢除黑奴制度的總統是誰？", a:"林肯", p:"找到潘姐並跟她握手感謝她解放黑奴"},
+  {id:3,  cat:"地理題", q:"台灣位於哪兩個板塊的交界處？", a:"歐亞板塊與菲律賓海板塊", p:"海上盪鞦韆一次"},
+  {id:4,  cat:"公司題", q:"請唸出公司的全銜", a:"英屬維京群島商嘉碼科技有限公司台灣分公司", p:"玩海上溜滑梯一邊大喊我愛嘉碼"},
+  {id:5,  cat:"邏輯題", q:"小明的爸爸有5顆蘋果，小王是爸爸的弟弟，他有2顆蘋果，小明有3顆蘋果，爸爸和小王又各給小明2顆蘋果，請問小明跟小王是什麼關係？", a:"叔姪關係", p:"跟街口說叔叔好"},
+  {id:6,  cat:"公司題", q:"請拼出GAMA TECHNOLOGY", a:"ＧＡＭＡ　ＴＥＣＨＮＯＬＯＧＹ", p:"玩海上盪鞦韆一邊大喊我愛嘉碼"},
+  {id:7,  cat:"生活題", q:"最新的正確洗手步驟口訣是什麼？", a:"內、外、夾、弓、大、立、完", p:"到海裡洗手"},
+  {id:8,  cat:"公司題", q:"出海這本書的作者是誰？", a:"簡立峰", p:"玩海上溜滑梯一邊大喊我出海了"},
+  {id:9,  cat:"邏輯題", q:"數學題：請問61是質數嗎？", a:"是\n解釋：質數是除了 1 和該數自身外，無法被其他自然數整除的數。", p:"對冏尼說 我除了你還是你"},
+  {id:10, cat:"動畫題", q:"玩具總動員裡胡迪的主人叫什麼名字？", a:"安迪（Andy）", p:"玩海上盪鞦韆一邊大喊我的靴子裡有蛇"},
+  {id:11, cat:"動畫題", q:"動物方程式裡面快俠是什麼動物？", a:"樹懶", p:"模仿樹懶很慢的溜滑梯"},
+  {id:12, cat:"自然題", q:"植物葉子表面的綠色物質，主要功能是進行光合作用，這種物質叫什麼？", a:"葉綠素", p:"躺在sup上行光合作用"},
+  {id:13, cat:"地理題", q:"澎湖群島主要是由哪一種岩石構成的？", a:"玄武岩", p:"跟澎湖景觀合照一張"},
+  {id:14, cat:"地理題", q:"哪一個緯度線將地球分為南半球與北半球？", a:"赤道", p:null},
+  {id:15, cat:"歷史題", q:"台灣民間傳說中，林默娘是指哪一位神明？", a:"媽祖", p:"雙手合十虔誠落海"},
+  {id:16, cat:"地理題", q:"撒哈拉沙漠主要位於哪一個大洲？", a:"非洲", p:"玩海上溜滑梯大喊芝麻開門"},
+  {id:17, cat:"生活題", q:"說出三樣澎湖名產", a:"黑糖糕、花生酥、干貝醬(XO醬)、仙人掌冰、花枝丸、紫菜、小管醬、丁香魚、冰心糕、鹹餅\n（任三樣均可）", p:null},
+  {id:18, cat:"動畫題", q:"胖虎的妹妹叫什麼名字", a:"小珠", p:"玩海上盪鞦韆大喊我是胖虎我是孩子王"},
+  {id:19, cat:"生活題", q:"1000元鈔票上面有幾個小朋友", a:"6位（4位明顯 / 2位隱藏）", p:"跟一個媽媽說 媽媽十元（台語）"},
+  {id:20, cat:"公司題", q:"GAMA是在西元幾年創立的", a:"2010年", p:"玩海上盪鞦韆一邊大喊我愛嘉碼"},
+  {id:21, cat:"公司題", q:"去年員工旅遊去哪裡？", a:"宜蘭", p:"在船上隨機找一位民眾問他：你要去哪裡！"},
+  {id:22, cat:"公司題", q:"請將以下同事年齡由大到小排序：\nMOY　TY　協駿", a:"Moy ＞ 協駿 ＞ TY", p:"對Moy大喊吳姐好"},
+  {id:23, cat:"生活題", q:"洗手時，搓揉肥皂的時間至少要達到幾秒，才能有效殺滅病毒？\n(A) 10 秒　(B) 20 秒　(C) 30 秒", a:"B（20秒）", p:"到海裡洗手"},
+  {id:24, cat:"生活題", q:"下列哪一種水果的維生素 C 含量特別高，適合在日常生活中補充體力？\n(A) 蘋果　(B) 芭樂　(C) 橘子", a:"B（芭樂）", p:"玩海上盪鞦韆一邊喊多C多健康"},
+  {id:25, cat:"自然題", q:"月亮繞著地球轉，地球繞著太陽轉。請問下列哪一個天體是「恆星」？\n(A) 月球　(B) 地球　(C) 太陽", a:"C（太陽）", p:"玩海上盪鞦韆一邊大喊太陽寶寶出來了"},
+  {id:26, cat:"歷史題", q:"紅毛城最早是哪一個國家的人所建造的？\n(A) 荷蘭人　(B) 西班牙人　(C) 英國人", a:"B（西班牙人）", p:"玩海上溜滑梯一邊大喊Formosa"},
+  {id:27, cat:"公司題", q:"街口的本名叫什麼？", a:"陳俊良", p:"跟街口說我記住你了"},
+  {id:28, cat:"公司題", q:"請將以下人選依協駿喜愛程度由愛到不愛排序：\nStan　太妍　安俞真　Karina", a:"協駿本人：我都愛", p:"請跟協駿說 你也可以愛我嗎"},
+  {id:29, cat:"邏輯題", q:"一個大籃子裡有 10 個蘋果，你拿走了 3 個，請問你手裡有幾個蘋果？", a:"3個", p:"跟Moy說我是你的小蘋果"},
+  {id:30, cat:"邏輯題", q:"小明的爸爸有三個小孩，大兒子叫大毛，二兒子叫二毛，請問三兒子叫什麼？", a:"小明", p:"跟Ray說請問你是小銘嗎？"},
+  {id:31, cat:"動畫題", q:"小丸子的爺爺叫什麼名字", a:"有藏（全名：櫻友藏）", p:"跟囧尼說 我的花輪～～～～"},
+  {id:32, cat:"生活題", q:"魔術方塊共有幾個方形貼紙", a:"54個（一面9個 × 6面）", p:"變一個跳進海裡的魔術"},
+  {id:33, cat:"公司題", q:"今年是GAMA第幾周年", a:"16周年", p:"玩海上盪鞦韆一邊大喊我愛嘉碼"},
+  {id:34, cat:"公司題", q:"冏尼共有幾個小孩", a:"3個", p:"跟囧尼說 我可以成為你第四個孩子嗎"},
+  {id:35, cat:"生活題", q:"請問「現在都幾月了」後面要接什麼", a:"還這麼熱！\n出自反同家長代表林素每，後來變成梗圖，通常用來形容天氣炎熱。", p:"到海裡降溫"},
+  {id:36, cat:"生活題", q:"ㄅ級分指的是\n(A) 棒透了　(B) 爛透了　(C) 87分", a:"A（棒透了）\n由 YouTuber「金童」創立，後因網紅「李怡蓁」介紹而在社群瘋傳", p:"玩海上溜滑梯一邊喊嘉碼超ㄅ"},
+  {id:37, cat:"邏輯題", q:"醫生給你 3 顆藥丸，要你每半個小時吃一顆，請問吃完這 3 顆藥總共要花多久時間？\n(A) 1.5 小時　(B) 1 小時　(C) 45 分鐘", a:"B（1小時）\n第一顆立刻吃，半小時吃第二顆，一小時吃第三顆", p:"用最可愛的臉跟小威說藥藥好苦喔"},
+  {id:38, cat:"歷史題", q:"現代人常用的「藍牙 (Bluetooth)」技術，它的名字是取自哪一個歷史人物？\n(A) 一位英國科學家　(B) 一位北歐國王　(C) 希臘神話的神", a:"B（一位北歐國王）\n取自10世紀丹麥國王哈拉爾德，象徵通訊技術的統一。", p:"跟協駿說你是不是把藍牙打開了 我覺得我們配對成功了"},
+  {id:39, cat:"生活題", q:"台灣人聽到驚訝的事，最經典、使用率最高的回答是什麼", a:"真的假的 / 真假", p:"玩海上盪鞦韆邊喊真嘟假嘟"},
+  {id:40, cat:"公司題", q:"請將以下同事年齡由大到小排序：\n姿驊　Eason　Ren　Jackson", a:"Eason ＞ Ren ＞ 姿驊 ＞ Jackson", p:"對Eason喊王哥好"},
+  {id:41, cat:"公司題", q:"這次來澎湖是搭乘什麼航空", a:"華信航空", p:"跟姿驊說請問這班飛機的終點站是妳心裡嗎？"},
+  {id:42, cat:"自然題", q:"下列何者不是昆蟲？\n螞蟻　蜘蛛　螳螂", a:"蜘蛛（蜘蛛是蛛形綱，不是昆蟲）", p:"用蜘蛛人的姿勢跳進海裡"},
+  {id:43, cat:"自然題", q:"下列何者不是哺乳類？\n企鵝　蝙蝠　袋鼠", a:"企鵝（企鵝是鳥類）", p:"船上學企鵝走路一圈"},
+  {id:44, cat:"公司題", q:"請問Renee的先生叫什麼名字（中文全名）", a:"張育豪", p:"對Stan說你可以幫我洗個東西嗎 喜歡你"},
+  {id:45, cat:"生活題", q:"全聯福利中心實在「　　」要接什麼？", a:"真便宜", p:"一邊sup一邊唱福利熊 熊福利 福利熊 熊福利"},
+  {id:46, cat:"生活題", q:"請問鼎泰豐的小籠包有幾摺", a:"18摺", p:"對潘姐說吃小籠包要小心燙，但我愛你的心不怕燙。"},
+  {id:47, cat:"歷史題", q:"台灣史中，19 世紀末簽訂的哪一個條約，將台灣與澎湖割讓給日本？\n(A) 南京條約　(B) 馬關條約　(C) 北京條約", a:"B（馬關條約）", p:null},
+  {id:48, cat:"地理題", q:"如果我們在赤道上，請問當地的緯度是多少度？\n(A) 0 度　(B) 90 度　(C) 105 度", a:"A（0度）", p:null},
+  {id:49, cat:"動畫題", q:"馬力歐裡面的耀西是什麼動物", a:"恐龍（烏龜）", p:"學馬力歐姿勢跳進海裡"},
+  {id:50, cat:"歷史題", q:"白沙屯媽祖繞境日期是怎麼決定的", a:"擲筊", p:null}
+];
+
+const TEAM_LABELS = ["第一隊","第二隊","第三隊","第四隊"];
+const TEAM_MEMBERS = [
+  ["嚴志軒","黃易","張育豪","林峻賢","郭慧杉","李宣樺","邱宇柔","杜亭燁","泰安Bye Bye"],
+  ["陳俊良","王鵬富","江浩文","黃元邑","王裕盛","杜佳瀚","郭景涵","楊智婷","楊子萱"],
+  ["陳威村","林東慶","王正頡","張家銘","黃奕翔","陳俊豪","潘亮妤","王姿驊","楊堂淑"],
+  ["朱余晟","黃群哲","陳協駿","江仁豪","江益愷","宋煥為","吳茜那","黃玟瑜","黃郁絢"]
+];
+const TEAM_COLORS = ["var(--blue-1)","var(--blue-2)","var(--blue-3)","var(--blue-4)"];
+const TEAM_COLORS_HEX = ["#F87171","#FBBF24","#6EE7B7","#93C5FD"];
+
+let teams = TEAM_LABELS.map((name, i) => ({ id: i+1, name, score: 0, answered: 0 }));
+let activeTeamId = 1;
+let tileState = {};
+let currentQId = null;
+let selectedAnswerTeam = null;
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderScoreboards() {
+  document.getElementById('scoreRow').innerHTML = teams.map(t => `
+    <div class="team-card ${t.id === activeTeamId ? 'active' : ''}" data-tid="${t.id}" onclick="setActiveTeam(${t.id})">
+      <div class="active-tag">作答中</div>
+      <div class="team-num">${t.name}</div>
+      <div class="team-score">${t.score}</div>
+      <div class="team-meta">已答 <b>${t.answered}</b> / 10 題</div>
+      ${t.answered >= 10 ? '<div class="team-maxed">已達上限</div>' : ''}
+      <button class="team-roster-btn" onclick="event.stopPropagation(); showRoster(${t.id})">查看名單</button>
+    </div>`).join('');
+}
+
+function renderGrid() {
+  document.getElementById('questionGrid').innerHTML = QUESTIONS.map(q => {
+    const st = tileState[q.id];
+    let cls = '', dot = '';
+    if (st) {
+      cls = st.correct ? 'correct used' : 'wrong used';
+      dot = `<div class="tile-dot" style="background:${TEAM_COLORS_HEX[st.teamId-1]}">${st.teamId}</div>`;
+    }
+    return `
+    <div class="q-tile ${cls}" data-cat="${q.cat}" onclick="openQuestion(${q.id})">
+      ${dot}
+      <div class="q-num">${q.id}</div>
+      <div class="q-cat-lbl">${q.cat}</div>
+    </div>`;
+  }).join('');
+}
+
+function setActiveTeam(id) {
+  activeTeamId = id;
+  renderScoreboards();
+  showToast(`${teams[id-1].name} 作答中`, 'toast-info');
+}
+
+// ── MODAL ─────────────────────────────────────────────────────
+function openQuestion(id) {
+  if (tileState[id]) return;
+  currentQId = id;
+  selectedAnswerTeam = activeTeamId;
+  const q = QUESTIONS.find(x => x.id === id);
+
+  document.getElementById('mQnum').textContent = `第 ${id} 題`;
+  const catEl = document.getElementById('mCat');
+  catEl.textContent = q.cat;
+  catEl.className = `modal-cat-badge cat-${q.cat}`;
+  document.getElementById('mQuestion').textContent = q.q;
+  document.getElementById('mAnswer').textContent = q.a;
+
+  const penCard = document.getElementById('penaltyCard');
+  if (q.p) {
+    document.getElementById('mPenalty').textContent = q.p;
+    penCard.style.display = '';
+  } else {
+    penCard.style.display = 'none';
+  }
+
+  document.getElementById('teamPickRow').innerHTML = teams.map(t =>
+    `<button class="pick-btn ${t.id === selectedAnswerTeam ? 'sel' : ''}" data-tid="${t.id}"
+      ${t.answered >= 10 ? 'disabled' : ''} onclick="pickTeam(${t.id})">${t.name}</button>`
+  ).join('');
+
+  document.getElementById('answerSection').classList.remove('show');
+  document.getElementById('revealWrap').style.display = '';
+  document.getElementById('modalBg').classList.add('show');
+}
+
+function pickTeam(id) {
+  selectedAnswerTeam = id;
+  document.querySelectorAll('.pick-btn').forEach(b =>
+    b.classList.toggle('sel', +b.dataset.tid === id));
+}
+
+function revealAnswer() {
+  document.getElementById('revealWrap').style.display = 'none';
+  document.getElementById('answerSection').classList.add('show');
+}
+
+function judgeAnswer(correct) {
+  if (!selectedAnswerTeam) { showToast('請選擇作答隊伍', 'toast-err'); return; }
+  const t = teams[selectedAnswerTeam - 1];
+  if (t.answered >= 10) { showToast(`${t.name} 已達10題上限`, 'toast-err'); return; }
+
+  tileState[currentQId] = { correct, teamId: selectedAnswerTeam };
+  t.answered++;
+  if (correct) {
+    t.score += 10;
+    showToast(`${t.name} 答對　+10 分`, 'toast-ok');
+  } else {
+    showToast(`${t.name} 答錯　執行懲罰`, 'toast-err');
+  }
+  activeTeamId = selectedAnswerTeam;
+  closeModal();
+  renderScoreboards();
+  renderGrid();
+}
+
+function closeModal() {
+  document.getElementById('modalBg').classList.remove('show');
+  currentQId = null;
+}
+function bgClick(e) {
+  if (e.target === document.getElementById('modalBg')) closeModal();
+}
+
+// ── SCOREBOARD ────────────────────────────────────────────────
+function showScoreboard() {
+  const ranked = [...teams].sort((a, b) => b.score - a.score || a.id - b.id);
+  const icons = ['🥇','🥈','🥉','🏅'];
+  document.getElementById('sbCards').innerHTML = ranked.map((t, i) =>
+    `<div class="sb-card" data-rank="${i+1}">
+      <div class="sb-rank">${icons[i]}</div>
+      <div class="sb-name">${t.name}</div>
+      <div class="sb-pts">${t.score}</div>
+      <div class="sb-answered">已答 ${t.answered} 題</div>
+    </div>`).join('');
+  document.getElementById('sbOverlay').classList.add('show');
+}
+function hideScoreboard() {
+  document.getElementById('sbOverlay').classList.remove('show');
+}
+
+// ── ROSTER ────────────────────────────────────────────────────
+function showRoster(id) {
+  const head = document.getElementById('rosterHead');
+  head.dataset.tid = id;
+  document.getElementById('rosterTitle').textContent = `第${['一','二','三','四'][id-1]}隊　名單`;
+  document.getElementById('rosterGrid').innerHTML =
+    TEAM_MEMBERS[id-1].map(m => `<div class="roster-member">${m}</div>`).join('');
+  document.getElementById('rosterBg').classList.add('show');
+}
+function closeRoster() {
+  document.getElementById('rosterBg').classList.remove('show');
+}
+function rosterBgClick(e) {
+  if (e.target === document.getElementById('rosterBg')) closeRoster();
+}
+
+// ── RESET ─────────────────────────────────────────────────────
+function resetGame() {
+  if (!confirm('確定要重置遊戲嗎？')) return;
+  teams.forEach(t => { t.score = 0; t.answered = 0; });
+  tileState = {};
+  activeTeamId = 1;
+  renderScoreboards();
+  renderGrid();
+  showToast('遊戲已重置', 'toast-info');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+let _tt;
+function showToast(msg, cls) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${cls} show`;
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+renderScoreboards();
+renderGrid();
+</script>
+</body>
+</html>
